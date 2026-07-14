@@ -1,0 +1,161 @@
+#!/bin/bash
+#Introduction: Provides a brief description of the script's purpose and user instructions
+
+add_user(){
+ read -p "Enter a username to add " username
+ read -p "Enter a full name to add: " fullname
+ while true; do
+    if [[ -z "$username" ]]; then
+        read -p "Username has not been entered. Try again." username
+    elif [[ -z "$fullname" ]]; then
+        read -p "Enter fullname again: " fullname
+    else
+        echo "Username added: $username."
+        sudo useradd -c "$fullname" "$username"
+        sudo passwd $username
+        break
+    fi
+ done
+}
+
+delete_user(){
+ echo "Enter a username to delete: "
+ read userdel
+ #Error checking loop
+ while true; do
+    if [[ -z "$userdel" ]]; then
+        echo "Username has not been entered. Try again."
+        echo "Enter Username: "
+        read userdel
+    fi
+
+    if grep -q "^$userdel:" /etc/passwd; then
+        echo "$userdel Deleted"
+        sudo userdel $userdel
+        exit 0
+    else
+        echo "$userdel Not found." >&2
+        exit 1
+    fi
+done
+}
+
+modify_user(){
+ echo "Enter a user to modify: "
+ read usermod
+ while true; do
+    if [[ -z "$usermod" ]]; then
+        echo "Username has not been entered. Try again to modify user."
+        echo "Enter Username: "
+        read usermod
+    fi
+
+    if grep -q "^$usermod:" /etc/passwd; then
+        echo "$usermod Spotted."
+        break
+    else
+        echo "$usermod Not found." >&2
+        exit 1
+    fi
+done
+
+echo -e "Modify Menu for $usermod:
+ 1) Change Password
+ 2) Change full name
+ 3) Change Shell
+ 4) Exit
+"
+
+while true; do
+    read -p "Enter a number from 1 to 4 to choose what to modify: " modopt
+
+    if [[ -z "$modopt" || $modopt -le 0 || $modopt -gt 4 ]]; then
+        echo "Invalid option. Try again."
+        continue
+    fi
+
+    case $modopt in
+        1)
+            echo "Changing password for $usermod..."
+            sudo passwd $usermod
+        ;;
+        2)
+            read -p "Enter new full name for $usermod: " newfullname
+            while true; do
+                if [[ -z "$newfullname" ]]; then
+                    echo "Full name cannot be empty. Try again."
+                    read -p "Enter new full name for $usermod: " newfullname
+                else
+                    break
+                fi
+            done
+            echo "Updating full name for $usermod..."
+            sudo chfn -f "$newfullname" "$usermod"
+        ;;
+        3)
+            read -p "Enter new login shell for $usermod (e.g., /bin/bash): " newshell
+            while true; do
+                if [[ -z "$newshell" ]]; then
+                    echo "Shell cannot be empty. Try again."
+                    read -p "Enter new login shell for $usermod (e.g., /bin/bash): " newshell
+                else
+                    break
+                fi
+            done
+            echo "Updating shell for $usermod to $newshell..."
+            sudo chsh -s "$newshell" "$usermod"
+        ;;
+        4)
+            echo "Exiting modify menu."
+            exit 0
+        ;;
+    esac
+ done
+}
+
+menu(){
+echo "User Account Management:"
+echo "This script provides a convenient way of managing user accounts through providing a menu to add user, delete user, modify user, list users and exit the program."
+echo -e "Menu:
+ 1) Add user
+ 2) Delete User
+ 3) Modify User
+ 4) List users
+ 5) Exit
+"
+echo -n "Enter a number from 1 to 5 in the input to navigate to each option (e.g 1): "
+read option
+
+case "$option" in
+1)
+add_user
+;;
+2)
+delete_user
+;;
+3)
+modify_user
+;;
+4)
+echo -e "List of users:
+"
+cat /etc/passwd
+;;
+5)
+echo "Exiting Program"
+exit 0
+;;
+*)
+echo "Error: Invalid option">&2
+exit 1;
+  ;;
+esac
+
+}
+
+main(){
+ while true; do
+ menu
+ done
+}
+main
