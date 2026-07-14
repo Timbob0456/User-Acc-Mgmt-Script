@@ -1,0 +1,84 @@
+#!/bin/bash
+#Introduction: Provides a brief description of the script's purpose and user instructions
+echo "User Account Management:"
+echo "This script provides a convenient way of managing user accounts through providing a menu to add user, delete user, modify user, list users and exit the program."
+echo -e "Menu:\n 1) Add user\n 2) Delete User\n 3) Modify User\n 4) List users\n 5) Exit\n"
+echo "Enter a number from 1 to 5 in the input to navigate to each option (e.g 1)"
+read option
+
+#While if statement is true, the program will keep on running until the user has chosen the correct option
+while true; do
+    if [[ -z "$option" || $option -le 0 || $option -gt 5 ]]; then
+        echo "Invalid option. Try again."
+        echo -e "Menu:\n 1) Add user\n 2) Delete User\n 3) Modify User\n 4) List users\n 5) Exit\n"
+        echo "Enter a number from 1 to 5 in the input to navigate to each option (e.g 1)"
+        read option
+    else
+        echo "Option number $option"
+        break #Exits the loop if condition is met
+    fi
+done
+
+case "$option" in
+1)
+    echo "Enter Username: "
+    read username
+    #Error checking loop
+    while true; do
+        if [[ -z "$username" ]]; then
+            echo "Username has not been entered. Try again."
+            echo "Enter Username: "
+            read username
+        else
+            echo "Username added: $username"
+            sudo useradd $username
+            echo "Enter user password: "
+            sudo passwd $username
+            exit 0
+        fi
+    done
+    ;;
+2)
+    echo "Enter a username to delete: "
+    read userdel
+    #Error checking loop
+    while true; do
+        if [[ -z "$userdel" ]]; then
+            echo "Username has not been entered. Try again."
+            echo "Enter Username: "
+            read userdel
+        fi
+
+        if grep -q "^$userdel:" /etc/passwd; then
+            echo "$userdel Deleted"
+            sudo userdel $userdel
+            exit 0
+        else
+            echo "$userdel Not found." >&2
+            exit 1
+        fi
+    done
+    ;;
+3)
+    echo "Enter a user to modify: "
+    read usermod
+    while true; do
+        if [[ -z "$usermod" ]]; then
+            echo "Username has not been entered. Try again to modify user."
+            echo "Enter Username: "
+            read usermod
+        fi
+
+        if grep -q "^$usermod:" /etc/passwd; then
+            echo "$usermod Spotted."
+            exit 0
+        else
+            echo "$usermod Not found." >&2
+            exit 1
+        fi
+    done
+    ;;
+*)
+    echo "lol"
+    ;;
+esac
